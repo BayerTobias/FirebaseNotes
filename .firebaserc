@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "devaknotes": {
+      "hosting": {
+        "DAKeep": [
+          "devaknotes"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "devaknotes"
+  }
+}
