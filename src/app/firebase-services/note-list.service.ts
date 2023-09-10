@@ -8,6 +8,9 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  where,
+  limit,
+  query,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Note } from '../interfaces/note.interface';
@@ -22,13 +25,16 @@ export class NoteListService {
   // items: any;
 
   notes: Note[] = [];
-  trashNotes: Note[] = [];
+  markedNotes: Note[] = [];
+  trash: Note[] = [];
 
   unsubNotes;
   unsubTrash;
+  unsubMarked;
 
   constructor() {
     this.unsubNotes = this.subNotes();
+    this.unsubMarked = this.subMarkedNotes();
     this.unsubTrash = this.subTrash();
 
     // this.items$ = collectionData(this.getNotesRef());
@@ -41,6 +47,7 @@ export class NoteListService {
     // this.items.unsubscribe();
     this.unsubNotes();
     this.unsubTrash();
+    this.unsubMarked();
   }
 
   async deleteNote(colId: string, docId: string) {
@@ -77,8 +84,8 @@ export class NoteListService {
     };
   }
 
-  async addNote(item: {}) {
-    await addDoc(this.getNotesRef(), item)
+  async addNote(item: {}, colId: string) {
+    await addDoc(this.getRef(colId), item)
       .catch((err) => {
         console.error(err);
       })
@@ -88,21 +95,33 @@ export class NoteListService {
   }
 
   subNotes() {
-    return onSnapshot(this.getNotesRef(), (notes) => {
+    const q = query(
+      this.getNotesRef(),
+      /*oderBy('title'), || where('status','==','note')*/ limit(100)
+    );
+    return onSnapshot(q, (notes) => {
       this.notes = [];
       notes.forEach((note) => {
         this.notes.push(this.setNoteObject(note.data(), note.id));
-        console.log(this.notes);
+      });
+    });
+  }
+
+  subMarkedNotes() {
+    const q = query(this.getNotesRef(), where('marked', '==', true));
+    return onSnapshot(q, (notes) => {
+      this.markedNotes = [];
+      notes.forEach((note) => {
+        this.markedNotes.push(this.setNoteObject(note.data(), note.id));
       });
     });
   }
 
   subTrash() {
     return onSnapshot(this.getTrashRef(), (trashNotes) => {
-      this.trashNotes = [];
+      this.trash = [];
       trashNotes.forEach((note) => {
-        this.trashNotes.push(this.setNoteObject(note.data(), note.id));
-        console.log('Trash', this.trashNotes);
+        this.trash.push(this.setNoteObject(note.data(), note.id));
       });
     });
   }
@@ -119,6 +138,10 @@ export class NoteListService {
 
   getNotesRef() {
     return collection(this.firestore, 'notes');
+  }
+
+  getRef(colId: string) {
+    return collection(this.firestore, colId);
   }
 
   getTrashRef() {

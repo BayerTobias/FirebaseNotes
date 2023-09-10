@@ -14,12 +14,11 @@ export class NoteListComponent {
 
   constructor(private noteService: NoteListService) {}
 
-  getNoteList() {
-    return this.noteService.notes;
-  }
-
-  getTrasList() {
-    return this.noteService.trashNotes;
+  getList(status: string) {
+    if (status === 'notes') {
+      if (this.favFilter === 'all') return this.noteService.notes;
+      else return this.noteService.markedNotes;
+    } else return this.noteService.trash;
   }
 
   changeFavFilter(filter: 'all' | 'fav') {
